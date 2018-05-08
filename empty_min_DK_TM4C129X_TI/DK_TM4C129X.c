@@ -285,7 +285,20 @@ GPIO_PinConfig gpioPinConfigs[] = {
     /* DK_TM4C129X_LED_B */
     GPIOTiva_PQ_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
     /* DK_TM4C129X_LED_R */
-    GPIOTiva_PN_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW
+    GPIOTiva_PN_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+    // EGH456 Motor Driver Pins
+    // Hall Effect Sensors
+    GPIOTiva_PL_3 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_BOTH_EDGES,
+    GPIOTiva_PL_5 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_BOTH_EDGES,
+    GPIOTiva_PL_4 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_BOTH_EDGES,
+
+    // Reset Pins
+    // Implemented as GPIO, may need as PWM according to supporting material
+    GPIOTiva_PA_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+    GPIOTiva_PL_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+    GPIOTiva_PL_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW
+
 };
 
 /*
@@ -434,9 +447,26 @@ const PWMTiva_HWAttrs pwmTivaHWAttrs[DK_TM4C129X_PWMCOUNT] = {
         .pwmOutput = PWM_OUT_1,
         .pwmGenOpts = PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
     },
+//    {
+//        .baseAddr = PWM0_BASE,
+//        .pwmOutput = PWM_OUT_6,
+//        .pwmGenOpts = PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
+//    },
+
+    //EGH456 Motor PWM
     {
         .baseAddr = PWM0_BASE,
-        .pwmOutput = PWM_OUT_6,
+        .pwmOutput = PWM_OUT_2,
+        .pwmGenOpts = PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
+    },
+    {
+        .baseAddr = PWM1_BASE,
+        .pwmOutput = PWM_OUT_3,
+        .pwmGenOpts = PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
+    },
+    {
+        .baseAddr = PWM1_BASE,
+        .pwmOutput = PWM_OUT_4,
         .pwmGenOpts = PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
     }
 };
@@ -447,10 +477,25 @@ const PWM_Config PWM_config[] = {
         .object = &pwmTivaObjects[0],
         .hwAttrs = &pwmTivaHWAttrs[0]
     },
+//    {
+//        .fxnTablePtr = &PWMTiva_fxnTable,
+//        .object = &pwmTivaObjects[1],
+//        .hwAttrs = &pwmTivaHWAttrs[1]
+//    },
     {
         .fxnTablePtr = &PWMTiva_fxnTable,
-        .object = &pwmTivaObjects[1],
-        .hwAttrs = &pwmTivaHWAttrs[1]
+        .object = &pwmTivaObjects[2],
+        .hwAttrs = &pwmTivaHWAttrs[2]
+    },
+    {
+        .fxnTablePtr = &PWMTiva_fxnTable,
+        .object = &pwmTivaObjects[3],
+        .hwAttrs = &pwmTivaHWAttrs[3]
+    },
+    {
+        .fxnTablePtr = &PWMTiva_fxnTable,
+        .object = &pwmTivaObjects[4],
+        .hwAttrs = &pwmTivaHWAttrs[4]
     },
     {NULL, NULL, NULL}
 };
@@ -469,9 +514,19 @@ void DK_TM4C129X_initPWM(void)
      * below will disable Ethernet functionality.
      */
     GPIOPinConfigure(GPIO_PF1_M0PWM1);
-    GPIOPinConfigure(GPIO_PK4_M0PWM6);
+ //   GPIOPinConfigure(GPIO_PK4_M0PWM6);
+
+    GPIOPinConfigure(GPIO_PM2_T3CCP0);
+    GPIOPinConfigure(GPIO_PM1_T2CCP1);
+    GPIOPinConfigure(GPIO_PM0_T2CCP0);
+
     GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_1);
-    GPIOPinTypePWM(GPIO_PORTK_BASE, GPIO_PIN_4);
+ //   GPIOPinTypePWM(GPIO_PORTK_BASE, GPIO_PIN_4);
+
+    GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_2);
+    GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_1);
+    GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_0);
+
 
     PWM_init();
 }

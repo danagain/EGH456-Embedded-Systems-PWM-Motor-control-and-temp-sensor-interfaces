@@ -35,14 +35,18 @@
  */
 /* XDCtools Header files */
 #include <xdc/std.h>
+#include <xdc/runtime/System.h>
+#include <xdc/runtime/Error.h>
 
 /* BIOS Header files */
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Task.h>
+#include <ti/sysbios/hal/Hwi.h>
 
 /* TI-RTOS Header files */
 // #include <ti/drivers/EMAC.h>
 #include <ti/drivers/GPIO.h>
+#include <ti/drivers/PWM.h>
 // #include <ti/drivers/I2C.h>
 // #include <ti/drivers/SDSPI.h>
 // #include <ti/drivers/SPI.h>
@@ -59,6 +63,12 @@
 Task_Struct task0Struct;
 Char task0Stack[TASKSTACKSIZE];
 
+PWM_Handle pwm1;
+PWM_Params params;
+uint16_t   pwmPeriod = 500;      // Period and duty in microseconds
+uint16_t   duty = 50;
+
+
 /*
  *  ======== heartBeatFxn ========
  *  Toggle the Board_LED0. The Task_sleep is determined by arg0 which
@@ -68,8 +78,16 @@ Void heartBeatFxn(UArg arg0, UArg arg1)
 {
     while (1) {
         Task_sleep((unsigned int)arg0);
-        GPIO_toggle(Board_LED0);
+        PWM_setDuty(pwm1, duty);
     }
+}
+
+/*
+ * Hall Effect Hwi Function
+ */
+Void hall_1() {
+    GPIO_toggle(Board_LED0);
+
 }
 
 /*
@@ -83,6 +101,7 @@ int main(void)
     Board_initGeneral();
     // Board_initEMAC();
     Board_initGPIO();
+    Board_initPWM();
     // Board_initI2C();
     // Board_initSDSPI();
     // Board_initSPI();
@@ -92,6 +111,35 @@ int main(void)
     // Board_initWatchdog();
     // Board_initWiFi();
 
+
+
+//    GPIOPinTypeGPIOInput(GPIO_PORTL_BASE, GPIO_PIN_3);
+//    GPIOIntTypeSet(GPIO_PORTL_BASE, GPIO_PIN_3, GPIO_BOTH_EDGES);
+//    //GPIOIntEnable(GPIO_PORTL_BASE, 0b00001000);
+//    GPIOIntEnable(GPIO_PORTL_BASE, GPIO_PIN_3);
+
+
+    /* install Button callback */
+    GPIO_setCallback(Hall_Effect_1, hall_1);
+    GPIO_setCallback(Hall_Effect_2, hall_1);
+    GPIO_setCallback(Hall_Effect_3, hall_1);
+
+    /* Enable interrupts */
+    GPIO_enableInt(Hall_Effect_1);
+    GPIO_enableInt(Hall_Effect_2);
+    GPIO_enableInt(Hall_Effect_3);
+
+
+    PWM_Params_init(&params);
+    params.period = pwmPeriod;
+    pwm1 = PWM_open(Board_PWM0, &params);
+      if (pwm1 == NULL) {
+          System_abort("Board_PWM0 did not open");
+     }
+
+
+
+
     /* Construct heartBeat Task  thread */
     Task_Params_init(&taskParams);
     taskParams.arg0 = 1000;
@@ -99,8 +147,8 @@ int main(void)
     taskParams.stack = &task0Stack;
     Task_construct(&task0Struct, (Task_FuncPtr)heartBeatFxn, &taskParams, NULL);
 
-    /* Turn on user LED  */
-    GPIO_write(Board_LED0, Board_LED_ON);
+    /* Turn off user LED  */
+    GPIO_write(Board_LED0, Board_LED_OFF);
 
     /* Start BIOS */
     BIOS_start();

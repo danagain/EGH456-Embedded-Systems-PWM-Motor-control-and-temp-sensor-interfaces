@@ -39,6 +39,19 @@ extern "C" {
 
 #include "DK_TM4C129X.h"
 
+// EGH456 Board Config
+#define Hall_Effect_1               EGH456_HF1
+#define Hall_Effect_2               EGH456_HF2
+#define Hall_Effect_3               EGH456_HF3
+#define Motor_Reset_A               EGH456_RESET1
+#define Motor_Reset_B               EGH456_RESET2
+#define Motor_Reset_C               EGH456_RESET3
+#define Motor_PWM_A                 DK_TM4C129X_PWM2
+#define Motor_PWM_B                 DK_TM4C129X_PWM3
+#define Motor_PWM_C                 DK_TM4C129X_PWM4
+
+// Regular Config
+
 #define Board_initEMAC              DK_TM4C129X_initEMAC
 #define Board_initGeneral           DK_TM4C129X_initGeneral
 #define Board_initGPIO              DK_TM4C129X_initGPIO
@@ -67,7 +80,7 @@ extern "C" {
 #define Board_I2C_TPL0401           DK_TM4C129X_I2C3
 
 #define Board_PWM0                  DK_TM4C129X_PWM1
-#define Board_PWM1                  DK_TM4C129X_PWM6
+//#define Board_PWM1                  DK_TM4C129X_PWM6
 
 #define Board_SDSPI0                DK_TM4C129X_SDSPI0
 
