@@ -296,6 +296,10 @@ GPIO_PinConfig gpioPinConfigs[] = {
     GPIOTiva_PP_5 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_BOTH_EDGES,
     GPIOTiva_PP_4 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_BOTH_EDGES,
 
+//    GPIOTiva_PL_3 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_RISING,
+//    GPIOTiva_PP_5 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_RISING,
+//    GPIOTiva_PP_4 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_RISING,
+
     // Reset Pins
     // Implemented as GPIO, may need as PWM according to supporting material
     GPIOTiva_PA_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,

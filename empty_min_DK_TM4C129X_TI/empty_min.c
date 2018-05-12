@@ -83,7 +83,7 @@ PWM_Params params;
 
 uint16_t   freq = 40000;     //PWM Frequency in Hz
 uint16_t period;
-double   duty = 0.1;
+double   duty = 0.5;
 
 // Motor Variables
 double error = 0;
@@ -91,6 +91,8 @@ double errorSum = 0;
 int speed = 0;
 int setSpeed = 0;
 bool clockwise = true;
+
+int Sw = 1;
 
 // Motor Control Variables:
 // Tweak parameters for better response
@@ -114,106 +116,220 @@ Void heartBeatFxn(UArg arg0, UArg arg1)
 //
 //        duty = pwmPeriod * (kp * error + ki * errorSum);
 
-       // duty = 500;
-        PWM_setDuty(pwm1, duty);
+        //duty += 0.001;
     }
+}
+
+void gpioButtonFxn0(unsigned int index)
+{
+    /* Clear the GPIO interrupt and toggle an LED */
+duty+=0.1;
+}
+
+void gpioButtonFxn1(unsigned int index)
+{
+    /* Clear the GPIO interrupt and toggle an LED */
+    duty-=0.1;
 }
 
 /*
  * Hall Effect Hwi Function
  * Change so these are running from one
  */
+//void HallEffectCallback(unsigned int index) {
+//    // Start timer
+//    // Time from last timer into buffer
+//    // Average to find motor speed
+//
+//
+////    GPIO_toggle(Board_LED0);
+//
+//    if(clockwise) {
+//        if(GPIO_read(Hall_Effect_1) && !GPIO_read(Hall_Effect_2) && GPIO_read(Hall_Effect_3)) {
+//            GPIO_write(Motor_Reset_A, 1);
+//            GPIO_write(Motor_Reset_B, 1);
+//            GPIO_write(Motor_Reset_C, 0);
+//
+//            TimerControlLevel(TIMER3_BASE, TIMER_A, 0);
+//            TimerControlLevel(TIMER2_BASE, TIMER_B, 1);
+//            TimerControlLevel(TIMER2_BASE, TIMER_A, 0);
+//
+//            TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -2));
+//            TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -2));
+//            TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
+//
+//        } else if (GPIO_read(Hall_Effect_1) && !GPIO_read(Hall_Effect_2) && !GPIO_read(Hall_Effect_3)) {
+//            GPIO_write(Motor_Reset_A, 1);
+//            GPIO_write(Motor_Reset_B, 0);
+//            GPIO_write(Motor_Reset_C, 1);
+//
+//            TimerControlLevel(TIMER3_BASE, TIMER_A, 0);
+//            TimerControlLevel(TIMER2_BASE, TIMER_B, 0);
+//            TimerControlLevel(TIMER2_BASE, TIMER_A, 1);
+//
+//            TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -2));
+//            TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
+//            TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -2));
+//
+//
+//        } else if (GPIO_read(Hall_Effect_1) && GPIO_read(Hall_Effect_2) && !GPIO_read(Hall_Effect_3)) {
+//            GPIO_write(Motor_Reset_A, 0);
+//            GPIO_write(Motor_Reset_B, 1);
+//            GPIO_write(Motor_Reset_C, 1);
+//
+//            TimerControlLevel(TIMER3_BASE, TIMER_A, 0);
+//            TimerControlLevel(TIMER2_BASE, TIMER_B, 0);
+//            TimerControlLevel(TIMER2_BASE, TIMER_A, 1);
+//
+//            TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
+//            TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -2));
+//            TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -2));
+//
+//
+//
+//        } else if (!GPIO_read(Hall_Effect_1) && GPIO_read(Hall_Effect_2) && !GPIO_read(Hall_Effect_3)) {
+//            GPIO_write(Motor_Reset_A, 1);
+//            GPIO_write(Motor_Reset_B, 1);
+//            GPIO_write(Motor_Reset_C, 0);
+//
+//            TimerControlLevel(TIMER3_BASE, TIMER_A, 1);
+//            TimerControlLevel(TIMER2_BASE, TIMER_B, 0);
+//            TimerControlLevel(TIMER2_BASE, TIMER_A, 0);
+//
+//            TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -2));
+//            TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -2));
+//            TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
+//
+//        } else if (!GPIO_read(Hall_Effect_1) && GPIO_read(Hall_Effect_2) && GPIO_read(Hall_Effect_3)) {
+//            GPIO_write(Motor_Reset_A, 1);
+//            GPIO_write(Motor_Reset_B, 0);
+//            GPIO_write(Motor_Reset_C, 1);
+//
+//            TimerControlLevel(TIMER3_BASE, TIMER_A, 1);
+//            TimerControlLevel(TIMER2_BASE, TIMER_B, 0);
+//            TimerControlLevel(TIMER2_BASE, TIMER_A, 0);
+//
+//            TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -2));
+//            TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
+//            TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -2));
+//
+//        } else if (!GPIO_read(Hall_Effect_1) && !GPIO_read(Hall_Effect_2) && GPIO_read(Hall_Effect_3)) {
+//            GPIO_write(Motor_Reset_A, 0);
+//            GPIO_write(Motor_Reset_B, 1);
+//            GPIO_write(Motor_Reset_C, 1);
+//
+//            TimerControlLevel(TIMER3_BASE, TIMER_A, 0);
+//            TimerControlLevel(TIMER2_BASE, TIMER_B, 1);
+//            TimerControlLevel(TIMER2_BASE, TIMER_A, 0);
+//
+//            TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
+//            TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -2));
+//            TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -2));
+//        }
+//
+//    } else {
+//
+//    }
+//
+//   //start monoshot timer,
+//    //speed = time between timers2
+//    //    TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
+//    //    TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
+//    //    TimerMatchSet(TIMER2_BASE, TIMER_A, duty * (period -1));
+//        //    TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
+//        //    TimerMatchSet(TIMER2_BASE, TIMER_B, duty * (period -1));
+//        //    TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
+//}
+
 void HallEffectCallback(unsigned int index) {
-    // Start timer
-    // Time from last timer into buffer
-    // Average to find motor speed
-
-    GPIO_toggle(Board_LED0);
-
     if(clockwise) {
-        if(GPIO_read(Hall_Effect_1) && !GPIO_read(Hall_Effect_2) && GPIO_read(Hall_Effect_3)) {
+
+
+        switch(Sw){
+        case 1:
             GPIO_write(Motor_Reset_A, 1);
-            GPIO_write(Motor_Reset_B, 1);
-            GPIO_write(Motor_Reset_C, 0);
+                       GPIO_write(Motor_Reset_B, 1);
+                       GPIO_write(Motor_Reset_C, 0);
 
-            TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -1));
-            TimerMatchSet(TIMER2_BASE, TIMER_B, period -1);
-            TimerMatchSet(TIMER2_BASE, TIMER_A, period -1);
+                       TimerControlLevel(TIMER3_BASE, TIMER_A, 0);
+                       TimerControlLevel(TIMER2_BASE, TIMER_B, 1);
+                       TimerControlLevel(TIMER2_BASE, TIMER_A, 0);
 
-        } else if (GPIO_read(Hall_Effect_1) && !GPIO_read(Hall_Effect_2) && !GPIO_read(Hall_Effect_3)) {
+                       TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -2));
+                       TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -2));
+                       TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
+                       break;
+
+        case 2:
             GPIO_write(Motor_Reset_A, 1);
-            GPIO_write(Motor_Reset_B, 0);
-            GPIO_write(Motor_Reset_C, 1);
+                        GPIO_write(Motor_Reset_B, 0);
+                        GPIO_write(Motor_Reset_C, 1);
 
-            TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -1));
-            TimerMatchSet(TIMER2_BASE, TIMER_B, period -1);
-            TimerMatchSet(TIMER2_BASE, TIMER_A, period -1);
+                        TimerControlLevel(TIMER3_BASE, TIMER_A, 0);
+                        TimerControlLevel(TIMER2_BASE, TIMER_B, 0);
+                        TimerControlLevel(TIMER2_BASE, TIMER_A, 1);
 
-
-        } else if (GPIO_read(Hall_Effect_1) && GPIO_read(Hall_Effect_2) && !GPIO_read(Hall_Effect_3)) {
+                        TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -2));
+                        TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
+                        TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -2));
+                        break;
+        case 3:
             GPIO_write(Motor_Reset_A, 0);
-            GPIO_write(Motor_Reset_B, 1);
-            GPIO_write(Motor_Reset_C, 1);
+                      GPIO_write(Motor_Reset_B, 1);
+                      GPIO_write(Motor_Reset_C, 1);
 
-            TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
-            TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -1));
-            TimerMatchSet(TIMER2_BASE, TIMER_A, period -1);
+                      TimerControlLevel(TIMER3_BASE, TIMER_A, 0);
+                      TimerControlLevel(TIMER2_BASE, TIMER_B, 0);
+                      TimerControlLevel(TIMER2_BASE, TIMER_A, 1);
 
-
-        } else if (!GPIO_read(Hall_Effect_1) && GPIO_read(Hall_Effect_2) && !GPIO_read(Hall_Effect_3)) {
+                      TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
+                      TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -2));
+                      TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -2));
+                      break;
+        case 4:
             GPIO_write(Motor_Reset_A, 1);
-            GPIO_write(Motor_Reset_B, 1);
-            GPIO_write(Motor_Reset_C, 0);
+                       GPIO_write(Motor_Reset_B, 1);
+                       GPIO_write(Motor_Reset_C, 0);
 
-            TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
-            TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -1));
-            TimerMatchSet(TIMER2_BASE, TIMER_A, period -1);
+                       TimerControlLevel(TIMER3_BASE, TIMER_A, 1);
+                       TimerControlLevel(TIMER2_BASE, TIMER_B, 0);
+                       TimerControlLevel(TIMER2_BASE, TIMER_A, 0);
 
-        } else if (!GPIO_read(Hall_Effect_1) && GPIO_read(Hall_Effect_2) && GPIO_read(Hall_Effect_3)) {
+                       TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -2));
+                       TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -2));
+                       TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
+        case 5:
             GPIO_write(Motor_Reset_A, 1);
-            GPIO_write(Motor_Reset_B, 0);
-            GPIO_write(Motor_Reset_C, 1);
+                        GPIO_write(Motor_Reset_B, 0);
+                        GPIO_write(Motor_Reset_C, 1);
 
-            TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
-            TimerMatchSet(TIMER2_BASE, TIMER_B, period -1);
-            TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -1));
+                        TimerControlLevel(TIMER3_BASE, TIMER_A, 1);
+                        TimerControlLevel(TIMER2_BASE, TIMER_B, 0);
+                        TimerControlLevel(TIMER2_BASE, TIMER_A, 0);
 
-        } else if (!GPIO_read(Hall_Effect_1) && !GPIO_read(Hall_Effect_2) && GPIO_read(Hall_Effect_3)) {
+                        TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -2));
+                        TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
+                        TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -2));
+                        break;
+        case 6:
             GPIO_write(Motor_Reset_A, 0);
-            GPIO_write(Motor_Reset_B, 1);
-            GPIO_write(Motor_Reset_C, 1);
+                      GPIO_write(Motor_Reset_B, 1);
+                      GPIO_write(Motor_Reset_C, 1);
 
-            TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
-            TimerMatchSet(TIMER2_BASE, TIMER_B, period -1);
-            TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -1));
+                      TimerControlLevel(TIMER3_BASE, TIMER_A, 0);
+                      TimerControlLevel(TIMER2_BASE, TIMER_B, 1);
+                      TimerControlLevel(TIMER2_BASE, TIMER_A, 0);
+
+                      TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
+                      TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -2));
+                      TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -2));
+                      break;
         }
-
-    } else {
-
+        Sw++;
+        if (Sw >= 7) {
+            Sw = 1;
+        }
     }
-
-
-
-
-
-   //start monoshot timer,
-    //speed = time between timers2
-
-
-
-
-
-
-    //    TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
-    //    TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
-    //    TimerMatchSet(TIMER2_BASE, TIMER_A, duty * (period -1));
-
-
-
-
-        //    TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
-        //    TimerMatchSet(TIMER2_BASE, TIMER_B, duty * (period -1));
-        //    TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
 }
 
 
@@ -222,8 +338,7 @@ void HallEffectCallback(unsigned int index) {
 /*
  *  ======== main ========
  */
-int main(void)
-{
+int main(void) {
     Task_Params taskParams;
 
     /* Call board init functions */
@@ -259,16 +374,16 @@ int main(void)
    TimerConfigure(TIMER2_BASE, TIMER_CFG_SPLIT_PAIR|TIMER_CFG_A_PWM|TIMER_CFG_B_PWM);
    TimerLoadSet(TIMER2_BASE, TIMER_A, period -1);
    TimerLoadSet(TIMER2_BASE, TIMER_B, period -1);
-   TimerMatchSet(TIMER2_BASE, TIMER_A, period -1);
-   TimerMatchSet(TIMER2_BASE, TIMER_B, period -1);
+   TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
+   TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
 
    SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
    SysCtlDelay(3);
    TimerConfigure(TIMER3_BASE, TIMER_CFG_SPLIT_PAIR|TIMER_CFG_A_PWM);
    TimerLoadSet(TIMER3_BASE, TIMER_A, period -1);
-   TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
+   TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
 
-   TimerEnable(TIMER3_BASE, TIMER_B);
+   TimerEnable(TIMER3_BASE, TIMER_A);
    TimerEnable(TIMER2_BASE, TIMER_A|TIMER_B);
 
    /* install Button callback */
@@ -280,6 +395,14 @@ int main(void)
    GPIO_enableInt(Hall_Effect_1);
    GPIO_enableInt(Hall_Effect_2);
    GPIO_enableInt(Hall_Effect_3);
+
+
+
+   GPIO_setCallback(Board_BUTTON0, gpioButtonFxn0);
+   GPIO_setCallback(Board_BUTTON1, gpioButtonFxn1);
+
+   GPIO_enableInt(Board_BUTTON0);
+   GPIO_enableInt(Board_BUTTON1);
 
     /* Construct heartBeat Task  thread */
     Task_Params_init(&taskParams);
