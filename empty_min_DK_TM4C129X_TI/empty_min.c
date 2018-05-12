@@ -69,6 +69,9 @@
 /* Board Header file */
 #include "Board.h"
 
+/* Standard C Lib */
+#include <stdbool.h>
+
 #define TASKSTACKSIZE   512
 
 Task_Struct task0Struct;
@@ -80,13 +83,14 @@ PWM_Params params;
 
 uint16_t   freq = 40000;     //PWM Frequency in Hz
 uint16_t period;
-double   duty = 1;
+double   duty = 0.1;
 
 // Motor Variables
-double error;
-double errorSum;
-int speed;
-int setSpeed;
+double error = 0;
+double errorSum = 0;
+int speed = 0;
+int setSpeed = 0;
+bool clockwise = true;
 
 // Motor Control Variables:
 // Tweak parameters for better response
@@ -119,43 +123,97 @@ Void heartBeatFxn(UArg arg0, UArg arg1)
  * Hall Effect Hwi Function
  * Change so these are running from one
  */
-void hall_1(unsigned int index) {
+void HallEffectCallback(unsigned int index) {
+    // Start timer
+    // Time from last timer into buffer
+    // Average to find motor speed
+
     GPIO_toggle(Board_LED0);
+
+    if(clockwise) {
+        if(GPIO_read(Hall_Effect_1) && !GPIO_read(Hall_Effect_2) && GPIO_read(Hall_Effect_3)) {
+            GPIO_write(Motor_Reset_A, 1);
+            GPIO_write(Motor_Reset_B, 1);
+            GPIO_write(Motor_Reset_C, 0);
+
+            TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -1));
+            TimerMatchSet(TIMER2_BASE, TIMER_B, period -1);
+            TimerMatchSet(TIMER2_BASE, TIMER_A, period -1);
+
+        } else if (GPIO_read(Hall_Effect_1) && !GPIO_read(Hall_Effect_2) && !GPIO_read(Hall_Effect_3)) {
+            GPIO_write(Motor_Reset_A, 1);
+            GPIO_write(Motor_Reset_B, 0);
+            GPIO_write(Motor_Reset_C, 1);
+
+            TimerMatchSet(TIMER3_BASE, TIMER_A, (1 - duty) * (period -1));
+            TimerMatchSet(TIMER2_BASE, TIMER_B, period -1);
+            TimerMatchSet(TIMER2_BASE, TIMER_A, period -1);
+
+
+        } else if (GPIO_read(Hall_Effect_1) && GPIO_read(Hall_Effect_2) && !GPIO_read(Hall_Effect_3)) {
+            GPIO_write(Motor_Reset_A, 0);
+            GPIO_write(Motor_Reset_B, 1);
+            GPIO_write(Motor_Reset_C, 1);
+
+            TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
+            TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -1));
+            TimerMatchSet(TIMER2_BASE, TIMER_A, period -1);
+
+
+        } else if (!GPIO_read(Hall_Effect_1) && GPIO_read(Hall_Effect_2) && !GPIO_read(Hall_Effect_3)) {
+            GPIO_write(Motor_Reset_A, 1);
+            GPIO_write(Motor_Reset_B, 1);
+            GPIO_write(Motor_Reset_C, 0);
+
+            TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
+            TimerMatchSet(TIMER2_BASE, TIMER_B, (1 - duty) * (period -1));
+            TimerMatchSet(TIMER2_BASE, TIMER_A, period -1);
+
+        } else if (!GPIO_read(Hall_Effect_1) && GPIO_read(Hall_Effect_2) && GPIO_read(Hall_Effect_3)) {
+            GPIO_write(Motor_Reset_A, 1);
+            GPIO_write(Motor_Reset_B, 0);
+            GPIO_write(Motor_Reset_C, 1);
+
+            TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
+            TimerMatchSet(TIMER2_BASE, TIMER_B, period -1);
+            TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -1));
+
+        } else if (!GPIO_read(Hall_Effect_1) && !GPIO_read(Hall_Effect_2) && GPIO_read(Hall_Effect_3)) {
+            GPIO_write(Motor_Reset_A, 0);
+            GPIO_write(Motor_Reset_B, 1);
+            GPIO_write(Motor_Reset_C, 1);
+
+            TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
+            TimerMatchSet(TIMER2_BASE, TIMER_B, period -1);
+            TimerMatchSet(TIMER2_BASE, TIMER_A, (1 - duty) * (period -1));
+        }
+
+    } else {
+
+    }
+
+
+
+
 
    //start monoshot timer,
     //speed = time between timers2
 
-//    TimerMatchSet(TIMER3_BASE, TIMER_A, duty * (period -1));
-//    TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
-//    TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
-
-    GPIO_write(Motor_Reset_A, 1);
-    GPIO_write(Motor_Reset_B, 1);
-    GPIO_write(Motor_Reset_C, 0);
-
-}
-
-void hall_2(unsigned int index) {
-
-//    TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
-//    TimerMatchSet(TIMER2_BASE, TIMER_B, duty * (period -1));
-//    TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
-
-    GPIO_write(Motor_Reset_A, 0);
-    GPIO_write(Motor_Reset_B, 1);
-    GPIO_write(Motor_Reset_C, 1);
-}
 
 
-void hall_3(unsigned int index) {
 
-//    TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
-//    TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
-//    TimerMatchSet(TIMER2_BASE, TIMER_A, duty * (period -1));
 
-    GPIO_write(Motor_Reset_A, 1);
-    GPIO_write(Motor_Reset_B, 0);
-    GPIO_write(Motor_Reset_C, 1);
+
+    //    TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
+    //    TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
+    //    TimerMatchSet(TIMER2_BASE, TIMER_A, duty * (period -1));
+
+
+
+
+        //    TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
+        //    TimerMatchSet(TIMER2_BASE, TIMER_B, duty * (period -1));
+        //    TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
 }
 
 
@@ -172,7 +230,7 @@ int main(void)
     Board_initGeneral();
     // Board_initEMAC();
     Board_initGPIO();
-    Board_initPWM();
+    //Board_initPWM();
     // Board_initI2C();
     // Board_initSDSPI();
     // Board_initSPI();
@@ -201,54 +259,27 @@ int main(void)
    TimerConfigure(TIMER2_BASE, TIMER_CFG_SPLIT_PAIR|TIMER_CFG_A_PWM|TIMER_CFG_B_PWM);
    TimerLoadSet(TIMER2_BASE, TIMER_A, period -1);
    TimerLoadSet(TIMER2_BASE, TIMER_B, period -1);
-   TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
-   TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
+   TimerMatchSet(TIMER2_BASE, TIMER_A, period -1);
+   TimerMatchSet(TIMER2_BASE, TIMER_B, period -1);
 
-     SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
-     SysCtlDelay(3);
-     TimerConfigure(TIMER3_BASE, TIMER_CFG_SPLIT_PAIR|TIMER_CFG_A_PWM);
-     TimerLoadSet(TIMER3_BASE, TIMER_A, period -1);
-     TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
+   SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
+   SysCtlDelay(3);
+   TimerConfigure(TIMER3_BASE, TIMER_CFG_SPLIT_PAIR|TIMER_CFG_A_PWM);
+   TimerLoadSet(TIMER3_BASE, TIMER_A, period -1);
+   TimerMatchSet(TIMER3_BASE, TIMER_A, period -1);
 
-     TimerEnable(TIMER3_BASE, TIMER_B);
-     TimerEnable(TIMER2_BASE, TIMER_A|TIMER_B);
+   TimerEnable(TIMER3_BASE, TIMER_B);
+   TimerEnable(TIMER2_BASE, TIMER_A|TIMER_B);
 
+   /* install Button callback */
+   GPIO_setCallback(Hall_Effect_1, HallEffectCallback);
+   GPIO_setCallback(Hall_Effect_2, HallEffectCallback);
+   GPIO_setCallback(Hall_Effect_3, HallEffectCallback);
 
-
-
-//    GPIOPinTypeGPIOInput(GPIO_PORTL_BASE, GPIO_PIN_3);
-//    GPIOIntTypeSet(GPIO_PORTL_BASE, GPIO_PIN_3, GPIO_BOTH_EDGES);
-//    //GPIOIntEnable(GPIO_PORTL_BASE, 0b00001000);
-//    GPIOIntEnable(GPIO_PORTL_BASE, GPIO_PIN_3);
-
-
-    // Motor Parameters
-    // Fixed values: change from gui
-    error = 0;
-    errorSum = 0;
-    setSpeed = 2000;
-    speed = 0;
-
-
-    /* install Button callback */
-    GPIO_setCallback(Hall_Effect_1, hall_1);
-    GPIO_setCallback(Hall_Effect_2, hall_2);
-    GPIO_setCallback(Hall_Effect_3, hall_3);
-
-    /* Enable interrupts */
-    GPIO_enableInt(Hall_Effect_1);
-    GPIO_enableInt(Hall_Effect_2);
-    GPIO_enableInt(Hall_Effect_3);
-
-
-    PWM_Params_init(&params);
-    params.period = SysCtlClockGet()/freq;
-
-    pwm1 = PWM_open(Board_PWM0, &params);
-
-//      if (pwm1 == NULL || pwm2 == NULL || pwm3 == NULL || pwm4 == NULL) {
-//        System_abort("Board_PWM0 did not open");
-//      }
+   /* Enable interrupts */
+   GPIO_enableInt(Hall_Effect_1);
+   GPIO_enableInt(Hall_Effect_2);
+   GPIO_enableInt(Hall_Effect_3);
 
     /* Construct heartBeat Task  thread */
     Task_Params_init(&taskParams);
@@ -265,27 +296,3 @@ int main(void)
 
     return (0);
 }
-
-// Scratchpad
-/*
- *  const PWMTimerTiva_HWAttrsV1 pwmTivaHWAttrs[] = {
-    2     {
-    3         .timerBaseAddr = TIMER2_BASE,
-    4             .halfTimer = TIMER_A,
-    5         .pinTimerPwmMode = GPIO_PA4_T2CCP0,
-    6         .gpioBaseAddr = GPIO_PORTA_BASE,
-    7         .gpioPinIndex = GPIO_PIN_4
-    8     }
-    9 };
- *
- *
- */
-
-
-//   GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_2);
-//    GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_1);
-//    GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_0);
-//T3CCP0
-//GPIOPinConfigure(GPIO_PM2_T3CCP0);
-//    GPIOPinConfigure(GPIO_PM1_T2CCP1);
-//    GPIOPinConfigure(GPIO_PM0_T2CCP0);
