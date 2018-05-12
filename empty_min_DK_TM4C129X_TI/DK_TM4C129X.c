@@ -61,6 +61,8 @@
 
 #include "DK_TM4C129X.h"
 
+#include <ti/drivers/PWM.h>
+
 #ifndef TI_DRIVERS_UART_DMA
 #define TI_DRIVERS_UART_DMA 0
 #endif
@@ -289,9 +291,14 @@ GPIO_PinConfig gpioPinConfigs[] = {
 
     // EGH456 Motor Driver Pins
     // Hall Effect Sensors
-    GPIOTiva_PL_3 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_BOTH_EDGES,
-    GPIOTiva_PL_5 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_BOTH_EDGES,
-    GPIOTiva_PL_4 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_BOTH_EDGES,
+    // CHANGE BACK TO BOTH EDGES
+//    GPIOTiva_PL_3 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_BOTH_EDGES,
+//    GPIOTiva_PP_5 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_BOTH_EDGES,
+//    GPIOTiva_PP_4 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_BOTH_EDGES,
+
+    GPIOTiva_PL_3 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_RISING,
+    GPIOTiva_PP_5 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_RISING,
+    GPIOTiva_PP_4 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_RISING,
 
     // Reset Pins
     // Implemented as GPIO, may need as PWM according to supporting material
@@ -322,6 +329,21 @@ const GPIOTiva_Config GPIOTiva_config = {
     .numberOfCallbacks = sizeof(gpioCallbackFunctions)/sizeof(GPIO_CallbackFxn),
     .intPriority = (~0)
 };
+
+///*
+// * EGH456 Timer PWM
+// */
+//const PWMTimerTiva_HWAttrsV1 pwmTivaHWAttrs[] = {
+//    {
+//        .timerBaseAddr = TIMER3_BASE,
+//        .halfTimer = TIMER_A,
+//        .pinTimerPwmMode = GPIO_PM2_T3CCP0,
+//        .gpioBaseAddr = GPIO_PORTM_BASE,
+//        .gpioPinIndex = GPIO_PIN_2
+//    }
+//};
+
+
 
 /*
  *  ======== DK_TM4C129X_initGPIO ========
@@ -456,19 +478,19 @@ const PWMTiva_HWAttrs pwmTivaHWAttrs[DK_TM4C129X_PWMCOUNT] = {
     //EGH456 Motor PWM
     {
         .baseAddr = PWM0_BASE,
-        .pwmOutput = PWM_OUT_2,
+        .pwmOutput = PWM_OUT_6,
         .pwmGenOpts = PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
     },
-    {
-        .baseAddr = PWM1_BASE,
-        .pwmOutput = PWM_OUT_3,
-        .pwmGenOpts = PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
-    },
-    {
-        .baseAddr = PWM1_BASE,
-        .pwmOutput = PWM_OUT_4,
-        .pwmGenOpts = PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
-    }
+//    {
+//        .baseAddr = PWM0_BASE,
+//        .pwmOutput = PWM_OUT_3,
+//        .pwmGenOpts = PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
+//    },
+//    {
+//        .baseAddr = PWM0_BASE,
+//        .pwmOutput = PWM_OUT_4,
+//        .pwmGenOpts = PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
+//    }
 };
 
 const PWM_Config PWM_config[] = {
@@ -484,19 +506,19 @@ const PWM_Config PWM_config[] = {
 //    },
     {
         .fxnTablePtr = &PWMTiva_fxnTable,
-        .object = &pwmTivaObjects[2],
-        .hwAttrs = &pwmTivaHWAttrs[2]
+        .object = &pwmTivaObjects[1],
+        .hwAttrs = &pwmTivaHWAttrs[1]
     },
-    {
-        .fxnTablePtr = &PWMTiva_fxnTable,
-        .object = &pwmTivaObjects[3],
-        .hwAttrs = &pwmTivaHWAttrs[3]
-    },
-    {
-        .fxnTablePtr = &PWMTiva_fxnTable,
-        .object = &pwmTivaObjects[4],
-        .hwAttrs = &pwmTivaHWAttrs[4]
-    },
+//    {
+//        .fxnTablePtr = &PWMTiva_fxnTable,
+//        .object = &pwmTivaObjects[2],
+//        .hwAttrs = &pwmTivaHWAttrs[2]
+//    },
+//    {
+//        .fxnTablePtr = &PWMTiva_fxnTable,
+//        .object = &pwmTivaObjects[3],
+//        .hwAttrs = &pwmTivaHWAttrs[3]
+//    },
     {NULL, NULL, NULL}
 };
 
@@ -514,18 +536,13 @@ void DK_TM4C129X_initPWM(void)
      * below will disable Ethernet functionality.
      */
     GPIOPinConfigure(GPIO_PF1_M0PWM1);
- //   GPIOPinConfigure(GPIO_PK4_M0PWM6);
+    GPIOPinConfigure(GPIO_PK4_M0PWM6);
 
-    GPIOPinConfigure(GPIO_PM2_T3CCP0);
-    GPIOPinConfigure(GPIO_PM1_T2CCP1);
-    GPIOPinConfigure(GPIO_PM0_T2CCP0);
+
 
     GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_1);
- //   GPIOPinTypePWM(GPIO_PORTK_BASE, GPIO_PIN_4);
+    GPIOPinTypePWM(GPIO_PORTK_BASE, GPIO_PIN_4);
 
-    GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_2);
-    GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_1);
-    GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_0);
 
 
     PWM_init();

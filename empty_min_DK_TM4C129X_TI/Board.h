@@ -46,9 +46,9 @@ extern "C" {
 #define Motor_Reset_A               EGH456_RESET1
 #define Motor_Reset_B               EGH456_RESET2
 #define Motor_Reset_C               EGH456_RESET3
-#define Motor_PWM_A                 DK_TM4C129X_PWM2
-#define Motor_PWM_B                 DK_TM4C129X_PWM3
-#define Motor_PWM_C                 DK_TM4C129X_PWM4
+//#define Motor_PWM_A                 DK_TM4C129X_PWM6
+//#define Motor_PWM_B                 DK_TM4C129X_PWM3
+//#define Motor_PWM_C                 DK_TM4C129X_PWM4
 
 // Regular Config
 

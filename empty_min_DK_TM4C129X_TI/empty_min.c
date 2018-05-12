@@ -55,6 +55,17 @@
 // #include <ti/drivers/Watchdog.h>
 // #include <ti/drivers/WiFi.h>
 
+#include "inc/hw_ints.h"
+#include "inc/hw_timer.h"
+#include "inc/hw_gpio.h"
+#include "driverlib/pin_map.h"
+#include "driverlib/sysctl.c"
+#include "driverlib/sysctl.h"
+#include "driverlib/Timer.c"
+#include "driverlib/Timer.h"
+#include "driverlib/gpio.c"
+#include "driverlib/gpio.h"
+
 /* Board Header file */
 #include "Board.h"
 
@@ -65,8 +76,22 @@ Char task0Stack[TASKSTACKSIZE];
 
 PWM_Handle pwm1;
 PWM_Params params;
-uint16_t   pwmPeriod = 500;      // Period and duty in microseconds
-uint16_t   duty = 50;
+
+
+uint16_t   freq = 40000;     //PWM Frequency in Hz
+uint16_t period;
+double   duty = 1;
+
+// Motor Variables
+double error;
+double errorSum;
+int speed;
+int setSpeed;
+
+// Motor Control Variables:
+// Tweak parameters for better response
+double kp = 0;
+double ki = 0;
 
 
 /*
@@ -77,18 +102,64 @@ uint16_t   duty = 50;
 Void heartBeatFxn(UArg arg0, UArg arg1)
 {
     while (1) {
+        // Motor control runs at 10Hz
         Task_sleep((unsigned int)arg0);
+
+//        error = speed - setSpeed;
+//        errorSum += error;
+//
+//        duty = pwmPeriod * (kp * error + ki * errorSum);
+
+       // duty = 500;
         PWM_setDuty(pwm1, duty);
     }
 }
 
 /*
  * Hall Effect Hwi Function
+ * Change so these are running from one
  */
-Void hall_1() {
+void hall_1(unsigned int index) {
     GPIO_toggle(Board_LED0);
 
+   //start monoshot timer,
+    //speed = time between timers2
+
+//    TimerMatchSet(TIMER3_BASE, TIMER_A, duty * (period -1));
+//    TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
+//    TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
+
+    GPIO_write(Motor_Reset_A, 1);
+    GPIO_write(Motor_Reset_B, 1);
+    GPIO_write(Motor_Reset_C, 0);
+
 }
+
+void hall_2(unsigned int index) {
+
+//    TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
+//    TimerMatchSet(TIMER2_BASE, TIMER_B, duty * (period -1));
+//    TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
+
+    GPIO_write(Motor_Reset_A, 0);
+    GPIO_write(Motor_Reset_B, 1);
+    GPIO_write(Motor_Reset_C, 1);
+}
+
+
+void hall_3(unsigned int index) {
+
+//    TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
+//    TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
+//    TimerMatchSet(TIMER2_BASE, TIMER_A, duty * (period -1));
+
+    GPIO_write(Motor_Reset_A, 1);
+    GPIO_write(Motor_Reset_B, 0);
+    GPIO_write(Motor_Reset_C, 1);
+}
+
+
+
 
 /*
  *  ======== main ========
@@ -111,6 +182,38 @@ int main(void)
     // Board_initWatchdog();
     // Board_initWiFi();
 
+    period = SysCtlClockGet()/freq;
+
+     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOM);
+     SysCtlDelay(3);
+     GPIOPinConfigure(GPIO_PM2_T3CCP0);
+     GPIOPinConfigure(GPIO_PM1_T2CCP1);
+     GPIOPinConfigure(GPIO_PM0_T2CCP0);
+     GPIOPinTypeTimer(GPIO_PORTM_BASE, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2);
+
+/*
+     Configure timer 2 to split pair and timer A and B in PWM mode
+     Set period and starting duty cycle.
+   */
+
+   SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER2);
+   SysCtlDelay(3);
+   TimerConfigure(TIMER2_BASE, TIMER_CFG_SPLIT_PAIR|TIMER_CFG_A_PWM|TIMER_CFG_B_PWM);
+   TimerLoadSet(TIMER2_BASE, TIMER_A, period -1);
+   TimerLoadSet(TIMER2_BASE, TIMER_B, period -1);
+   TimerMatchSet(TIMER2_BASE, TIMER_A, period -2);
+   TimerMatchSet(TIMER2_BASE, TIMER_B, period -2);
+
+     SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
+     SysCtlDelay(3);
+     TimerConfigure(TIMER3_BASE, TIMER_CFG_SPLIT_PAIR|TIMER_CFG_A_PWM);
+     TimerLoadSet(TIMER3_BASE, TIMER_A, period -1);
+     TimerMatchSet(TIMER3_BASE, TIMER_A, period -2);
+
+     TimerEnable(TIMER3_BASE, TIMER_B);
+     TimerEnable(TIMER2_BASE, TIMER_A|TIMER_B);
+
+
 
 
 //    GPIOPinTypeGPIOInput(GPIO_PORTL_BASE, GPIO_PIN_3);
@@ -119,10 +222,18 @@ int main(void)
 //    GPIOIntEnable(GPIO_PORTL_BASE, GPIO_PIN_3);
 
 
+    // Motor Parameters
+    // Fixed values: change from gui
+    error = 0;
+    errorSum = 0;
+    setSpeed = 2000;
+    speed = 0;
+
+
     /* install Button callback */
     GPIO_setCallback(Hall_Effect_1, hall_1);
-    GPIO_setCallback(Hall_Effect_2, hall_1);
-    GPIO_setCallback(Hall_Effect_3, hall_1);
+    GPIO_setCallback(Hall_Effect_2, hall_2);
+    GPIO_setCallback(Hall_Effect_3, hall_3);
 
     /* Enable interrupts */
     GPIO_enableInt(Hall_Effect_1);
@@ -131,18 +242,17 @@ int main(void)
 
 
     PWM_Params_init(&params);
-    params.period = pwmPeriod;
+    params.period = SysCtlClockGet()/freq;
+
     pwm1 = PWM_open(Board_PWM0, &params);
-      if (pwm1 == NULL) {
-          System_abort("Board_PWM0 did not open");
-     }
 
-
-
+//      if (pwm1 == NULL || pwm2 == NULL || pwm3 == NULL || pwm4 == NULL) {
+//        System_abort("Board_PWM0 did not open");
+//      }
 
     /* Construct heartBeat Task  thread */
     Task_Params_init(&taskParams);
-    taskParams.arg0 = 1000;
+    taskParams.arg0 = 100;
     taskParams.stackSize = TASKSTACKSIZE;
     taskParams.stack = &task0Stack;
     Task_construct(&task0Struct, (Task_FuncPtr)heartBeatFxn, &taskParams, NULL);
@@ -155,3 +265,27 @@ int main(void)
 
     return (0);
 }
+
+// Scratchpad
+/*
+ *  const PWMTimerTiva_HWAttrsV1 pwmTivaHWAttrs[] = {
+    2     {
+    3         .timerBaseAddr = TIMER2_BASE,
+    4             .halfTimer = TIMER_A,
+    5         .pinTimerPwmMode = GPIO_PA4_T2CCP0,
+    6         .gpioBaseAddr = GPIO_PORTA_BASE,
+    7         .gpioPinIndex = GPIO_PIN_4
+    8     }
+    9 };
+ *
+ *
+ */
+
+
+//   GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_2);
+//    GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_1);
+//    GPIOPinTypePWM(GPIO_PORTM_BASE, GPIO_PIN_0);
+//T3CCP0
+//GPIOPinConfigure(GPIO_PM2_T3CCP0);
+//    GPIOPinConfigure(GPIO_PM1_T2CCP1);
+//    GPIOPinConfigure(GPIO_PM0_T2CCP0);
